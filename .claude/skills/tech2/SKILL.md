@@ -93,6 +93,21 @@ This document synthesizes installation, configuration, and verification instruct
 ### Verification
 - Launch VS Code from Start Menu (Windows) or Applications / Spotlight (Mac). Confirm it opens to the Welcome tab.
 
+### Mac: Cannot Update on a Read-Only Volume
+
+If VS Code reports "Cannot update while running on a read-only volume", common causes are running it from **Downloads**, directly from a mounted **`.dmg` disk image**, or another quarantined/read-only location. The updater needs permission to modify the application.
+
+1. Quit VS Code completely (`Cmd+Q`).
+2. In Finder, drag `Visual Studio Code.app` into **Applications** (`/Applications`)
+   in the sidebar. If you opened a `.dmg`, drag the VS Code icon onto the
+   **Applications** folder shown in that window. This copies the app onto your Mac.
+3. Eject any mounted VS Code disk image from Finder's sidebar.
+4. Launch the copy from `/Applications` and confirm that it opens successfully.
+5. You can now delete the `.dmg` file from **Downloads**. It is only needed for
+   installation; deleting it does not remove the installed app.
+6. Remove any old Dock shortcut and add the copy from `/Applications`.
+7. Select **Code > Check for Updates...** and retry.
+
 ---
 
 ## 3. Git Installation & Setup
@@ -195,9 +210,40 @@ This document synthesizes installation, configuration, and verification instruct
 - **`conda: command not found` or `'conda' is not recognized`**:
   - *Windows*: Must use **Miniforge Prompt** from Start Menu rather than standard Command Prompt or PowerShell.
   - *VS Code Terminal*: Ensure Python Interpreter is selected in VS Code first so it auto-activates conda in new terminal sessions.
+- **Windows PowerShell execution policy blocks Conda activation in VS Code**:
+  - If PowerShell reports that running scripts is disabled (`activate.ps1 cannot be
+    loaded`), allow signed local scripts for the current user (no administrator
+    rights needed):
+    ```powershell
+    Set-ExecutionPolicy -ExecutionPolicy RemoteSigned -Scope CurrentUser
+    ```
+  - Alternatively, configure VS Code to bypass execution policy in `settings.json`:
+    ```json
+    "terminal.integrated.profiles.windows": {
+      "PowerShell": {
+        "source": "PowerShell",
+        "args": ["-ExecutionPolicy", "Bypass"]
+      }
+    }
+    ```
+  - Or switch VS Code's default terminal profile to Command Prompt or Git Bash via
+    **Terminal: Select Default Profile** in the Command Palette (`Ctrl+Shift+P`).
 - **`PackagesNotFoundError`**: Package is missing on `conda-forge`. Check spelling or install via `pip install <package>`.
 - **`ModuleNotFoundError` despite package installation**: Environment mismatch. Verify active terminal environment prompt `(env_name)` matches selected VS Code interpreter/kernel.
 - **Dependency Conflicts / Slow Solver**: Avoid over-specifying exact package versions (e.g., use `numpy` instead of `numpy=1.21`).
+- **Jupyter kernel crashes on Windows when running plotting cells (Miniforge)**:
+  - Cause: Miniforge does not register in the Windows Registry, so VS Code fails
+    to locate `conda.exe` and attaches the Python interpreter without environment
+    activation. Missing `PATH` entries for native plotting dependencies cause
+    the crash. Anaconda installations are typically unaffected.
+  - Fix 1 (recommended): Set `python.condaPath` in VS Code settings (`Ctrl+,`)
+    to the full path of `conda.exe` (found via
+    `for /f "delims=" %i in ('conda info --base') do @echo %i\Scripts\conda.exe`
+    in Miniforge Prompt).
+  - Fix 2: Launch VS Code from an activated Miniforge Prompt (`conda activate TECH2`
+    then `code`).
+  - Fix 3: Reinstall Miniforge, checking "Add Miniforge3 to my PATH environment
+    variable for your user installation", then recreate the `TECH2` environment.
 - **Identifying Active Environment**: Run `conda env list`; active environment is marked with an asterisk `*`.
 
 
